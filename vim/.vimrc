@@ -7,6 +7,7 @@ Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-surround'
 Plug 'morhetz/gruvbox'
 Plug 'yegappan/lsp'
+Plug 'LunarWatcher/auto-pairs'
 
 call plug#end()
 
@@ -58,3 +59,10 @@ autocmd User LspAttached nnoremap <buffer> <silent> gr <cmd>LspShowReferences<CR
 autocmd User LspAttached nnoremap <buffer> <silent> K  <cmd>LspHover<CR>
 autocmd User LspAttached nnoremap <buffer> <silent> ]d <cmd>LspDiag next<CR>
 autocmd User LspAttached nnoremap <buffer> <silent> [d <cmd>LspDiag prev<CR>
+
+" Auto-close (), [], {}, quotes. Backspace inside an empty pair deletes both.
+" Enter is mapped once here: accept the completion menu if it's open,
+" otherwise new line (and open the block when between {}).
+let g:AutoPairsMapBS = 1
+let g:AutoPairsMapCR = 0
+imap <expr> <CR> pumvisible() ? "\<C-y>" : "\<CR>\<Plug>AutoPairsReturn"

@@ -133,8 +133,8 @@ guide at column 81, tabs drawn as thin indent guides and trailing spaces as
 dots. Relative line numbers, smart-case search, no line wrapping.
 
 Plugins (via vim-plug): NERDTree, fzf + fzf.vim, vim-commentary,
-vim-surround, gruvbox (dark), and [yegappan/lsp](https://github.com/yegappan/lsp)
-with **clangd** for C.
+vim-surround, gruvbox (dark), [auto-pairs](https://github.com/LunarWatcher/auto-pairs)
+and [yegappan/lsp](https://github.com/yegappan/lsp) with **clangd** for C.
 
 | Key      | Action |
 |----------|--------|
@@ -145,6 +145,10 @@ with **clangd** for C.
 | `gr`     | List references |
 | `K`      | Show the type / documentation of the symbol under the cursor |
 | `]d` `[d`| Next / previous error or warning |
+
+Brackets and quotes close automatically: typing `(` gives `()`, typing the
+closing one yourself just steps over it, `{` then `Enter` opens an indented
+block, and `Backspace` in an empty pair deletes both.
 
 Completion pops up automatically while typing: `Ctrl-n`/`Ctrl-p` to move,
 `Enter` to accept. Errors and warnings show up as you type, with a sign in the

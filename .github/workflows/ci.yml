@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: shellcheck + status line tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: shellcheck install.sh claude/statusline-command.sh tests/*.sh
+      - name: status line
+        run: sh tests/statusline.sh
+
+  install:
+    name: install on fresh Debian (twice)
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    steps:
+      - name: Prepare a sudo user, like a real machine
+        run: |
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq sudo passwd git >/dev/null
+          useradd -m -s /bin/bash dev
+          echo "dev ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/dev
+      - uses: actions/checkout@v4
+      - name: Install twice, second run must change nothing
+        run: |
+          cp -r "$GITHUB_WORKSPACE" /home/dev/dotfiles
+          chown -R dev: /home/dev/dotfiles
+          su - dev -c "cd ~/dotfiles && DEBIAN_FRONTEND=noninteractive tests/install-twice.sh"

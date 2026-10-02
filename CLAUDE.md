@@ -53,21 +53,27 @@ Input schema: https://code.claude.com/docs/en/statusline
 
 ## Testing
 
-- Status line: the README command, plus empty input, invalid JSON, no
-  `rate_limits`, empty `model.display_name`, a directory outside `$HOME` and
-  a path with spaces.
-- Installer: `./install.sh --dry-run`, then a fresh machine:
+CI (`.github/workflows/ci.yml`) runs the same scripts on every push; run them
+before pushing:
+
+- `docker run --rm -v "$PWD":/mnt:ro koalaman/shellcheck:stable install.sh claude/statusline-command.sh tests/*.sh`
+  (shellcheck isn't installed locally). Must be clean, including style notes.
+- `sh tests/statusline.sh`: add a case there for any status line change.
+- `tests/install-twice.sh` really installs everything: only in a container,
+  exactly like CI:
 
   ```sh
   docker run --rm -v "$PWD":/src:ro debian:trixie bash -c '
-    apt-get update -qq && apt-get install -y -qq sudo passwd >/dev/null
+    apt-get update -qq && apt-get install -y -qq sudo passwd git >/dev/null
     useradd -m -s /bin/bash dev && echo "dev ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/dev
     cp -r /src /home/dev/dotfiles && chown -R dev: /home/dev/dotfiles
-    su - dev -c "cd ~/dotfiles && ./install.sh && ./install.sh"'
+    su - dev -c "cd ~/dotfiles && tests/install-twice.sh"'
   ```
 
-  The second run must report every step as already in place (except `chsh`,
-  which cannot succeed in the container).
+  It fails if the second run prints any change. Lines that legitimately show
+  up on every run are listed in its `allowed` pattern; keep that list short.
+- Tools installed to `~/.local/bin` must be found on the second run:
+  install.sh prepends that directory to `PATH` for this reason.
 
 ## settings.json
 

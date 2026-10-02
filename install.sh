@@ -5,25 +5,36 @@
 #   ./install.sh                       run all steps
 #   ./install.sh --dry-run             print what would be done
 #   ./install.sh --only zsh,claude     run only some steps
+#   ./install.sh --update              git pull the repo first, then install
 #
-# Steps: packages zsh vim gh claude sublime fonts shell git
+# Steps: packages zsh vim norminette gh claude sublime fonts shell git
 
+# jq filters below use $l / $r inside single quotes on purpose
+# shellcheck disable=SC2016
 set -eu
 
 DOTFILES="$(cd "$(dirname "$0")" && pwd)"
-ALL_STEPS="packages zsh vim gh claude sublime fonts shell git"
-APT_PACKAGES="zsh vim git curl jq ripgrep fzf build-essential clangd bear fontconfig ca-certificates"
+# gh, claude and norminette land here; the current session may predate the
+# directory, so make them visible to later steps (and to idempotence checks).
+export PATH="$HOME/.local/bin:$PATH"
+ALL_STEPS="packages zsh vim norminette gh claude sublime fonts shell git"
+APT_PACKAGES="zsh vim git curl jq ripgrep fzf build-essential clangd bear valgrind pipx fontconfig ca-certificates"
 
 DRY_RUN=0
+UPDATE=0
 STEPS=$ALL_STEPS
+ARGS=()
 
-usage() { sed -n '2,9s/^# \{0,1\}//p' "$0"; }
+usage() { sed -n '2,/^$/s/^# \{0,1\}//p' "$0"; }
 
 while [ $# -gt 0 ]; do
+    [ "$1" = --update ] || ARGS+=("$1")
     case "$1" in
         -n|--dry-run) DRY_RUN=1 ;;
+        --update) UPDATE=1 ;;
         --only)
             [ $# -ge 2 ] || { usage; exit 1; }
+            ARGS+=("$2")
             STEPS=$(echo "$2" | tr ',' ' '); shift
             for s in $STEPS; do
                 case " $ALL_STEPS " in *" $s "*) ;; *) echo "!! unknown step: $s" >&2; exit 1 ;; esac
@@ -140,9 +151,10 @@ step_zsh() {
 
 # ── vim ────────────────────────────────────────────────────────────────────
 step_vim() {
-    step "vim: .vimrc, clangd config, vim-plug, plugins"
+    step "vim: .vimrc, clangd config, templates, vim-plug, plugins"
     install_file "$DOTFILES/vim/.vimrc" "$HOME/.vimrc"
     install_file "$DOTFILES/clangd/config.yaml" "$HOME/.config/clangd/config.yaml"
+    install_file "$DOTFILES/vim/templates/Makefile" "$HOME/.vim/templates/Makefile"
     if [ -f "$HOME/.vim/autoload/plug.vim" ]; then
         skip "vim-plug"
     else
@@ -152,6 +164,16 @@ step_vim() {
     fi
     info "PlugInstall"
     run sh -c 'vim -E -s -u "$HOME/.vimrc" +PlugInstall +qall >/dev/null 2>&1 || true'
+}
+
+# ── norminette ─────────────────────────────────────────────────────────────
+step_norminette() {
+    step "norminette (42 norm checker, via pipx)"
+    if has norminette; then
+        skip "norminette"; return
+    fi
+    if ! has pipx; then warn "pipx not found (run the packages step)"; return; fi
+    run pipx install norminette
 }
 
 # ── gh ─────────────────────────────────────────────────────────────────────
@@ -182,7 +204,7 @@ step_gh() {
 # ── claude ─────────────────────────────────────────────────────────────────
 step_claude() {
     step "Claude Code: binary, status line, settings"
-    if has claude || [ -x "$HOME/.local/bin/claude" ]; then
+    if has claude; then
         skip "claude"
     else
         info "official installer"
@@ -252,7 +274,7 @@ step_fonts() {
         f="MesloLGS NF $style.ttf"
         if [ -f "$fonts/$f" ]; then skip "$f"; continue; fi
         info "$f"
-        run curl -fsSLo "$fonts/$f" --create-dirs "$base/$(echo "$f" | sed 's/ /%20/g')"
+        run curl -fsSLo "$fonts/$f" --create-dirs "$base/${f// /%20}"
         changed=1
     done
     if [ "$changed" = 1 ]; then
@@ -276,7 +298,8 @@ step_shell() {
 # Git identity depends on the machine (personal / work): never stored in the
 # repo, only prompted for when missing.
 step_git() {
-    step "Git identity"
+    step "Git: global ignore, identity"
+    install_file "$DOTFILES/git/ignore" "$HOME/.config/git/ignore"
     if git config --global user.name >/dev/null && git config --global user.email >/dev/null; then
         skip "$(git config --global user.name) <$(git config --global user.email)>"
         return
@@ -292,6 +315,17 @@ step_git() {
 }
 
 # ── main ───────────────────────────────────────────────────────────────────
+if [ "$UPDATE" = 1 ]; then
+    step "Update the dotfiles repo"
+    if [ "$DRY_RUN" = 1 ]; then
+        run git -C "$DOTFILES" pull --ff-only
+    else
+        git -C "$DOTFILES" pull --ff-only
+        # Re-exec so the steps run with the freshly pulled version of this script
+        exec "$DOTFILES/install.sh" ${ARGS[@]+"${ARGS[@]}"}
+    fi
+fi
+
 printf '\033[1mInstalling dotfiles from %s\033[0m' "$DOTFILES"
 [ "$DRY_RUN" = 1 ] && printf ' \033[33m(dry-run: nothing will be changed)\033[0m'
 printf '\n'

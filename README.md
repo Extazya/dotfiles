@@ -1,9 +1,12 @@
 # dotfiles
 
-My portable development environment: **zsh** (oh-my-zsh + Powerlevel10k),
-**vim** (gruvbox, NERDTree, fzf, clangd for C) and **Claude Code** (settings + a custom
-two-line status line showing context and real quota usage), with a single
-idempotent installer for Debian/Ubuntu.
+[![CI](https://github.com/Extazya/dotfiles/actions/workflows/ci.yml/badge.svg)](https://github.com/Extazya/dotfiles/actions/workflows/ci.yml)
+
+My portable development environment for plain C: **zsh** (oh-my-zsh +
+Powerlevel10k), **vim** and **Sublime Text** (clangd with the 42 flags),
+norminette, valgrind, and **Claude Code** (settings + a custom two-line status
+line showing context and real quota usage), with a single idempotent
+installer for Debian/Ubuntu.
 
 ## Quick start
 
@@ -15,6 +18,8 @@ cd ~/dotfiles
 exec zsh
 ```
 
+Later, to get the latest version and apply it: `./install.sh --update`.
+
 The installer is safe to re-run: every step checks what is already in place
 and skips it. Any existing file it replaces is first backed up as
 `<file>.bak`.
@@ -25,20 +30,25 @@ and skips it. Any existing file it replaces is first backed up as
 dotfiles/
 ├── install.sh                  installer (see below)
 ├── vim/.vimrc                  → ~/.vimrc
+├── vim/templates/Makefile      → ~/.vim/templates/Makefile
 ├── clangd/config.yaml          → ~/.config/clangd/config.yaml
 ├── zsh/.zshrc                  → ~/.zshrc
+├── git/ignore                  → ~/.config/git/ignore (global gitignore)
 ├── claude/
 │   ├── settings.json           → merged into ~/.claude/settings.json
 │   └── statusline-command.sh   → ~/.claude/statusline-command.sh
-└── sublime/                    → merged into ~/.config/sublime-text/Packages/User/
-    ├── Preferences.sublime-settings
-    ├── LSP.sublime-settings
-    ├── Default (Linux).sublime-keymap
-    └── Package Control.sublime-settings
+├── sublime/                    → merged into ~/.config/sublime-text/Packages/User/
+│   ├── Preferences.sublime-settings
+│   ├── LSP.sublime-settings
+│   ├── Default (Linux).sublime-keymap
+│   └── Package Control.sublime-settings
+├── tests/                      checks run by CI (see below)
+└── .github/workflows/ci.yml
 ```
 
-Files are **copied** (settings files are **merged**, see below), not symlinked. To change one, edit it in the repo and
-re-run `./install.sh --only <step>`.
+Files are **copied** (settings files are **merged**, see below), not
+symlinked. To change one, edit it in the repo and re-run
+`./install.sh --only <step>`.
 
 ## Installer
 
@@ -46,20 +56,22 @@ re-run `./install.sh --only <step>`.
 ./install.sh                     # all steps
 ./install.sh --dry-run           # print what would be done, change nothing
 ./install.sh --only zsh,claude   # run only some steps
+./install.sh --update           # git pull the repo first, then install
 ./install.sh --help
 ```
 
 | Step       | What it does |
 |------------|--------------|
-| `packages` | Installs missing apt packages: zsh, vim, git, curl, jq, ripgrep, fzf, build-essential, clangd, bear, fontconfig, ca-certificates (uses `sudo`, or runs directly as root) |
+| `packages` | Installs missing apt packages: zsh, vim, git, curl, jq, ripgrep, fzf, build-essential, clangd, bear, valgrind, pipx, fontconfig, ca-certificates (uses `sudo`, or runs directly as root) |
 | `zsh`      | Clones oh-my-zsh, Powerlevel10k, zsh-autosuggestions and zsh-syntax-highlighting, then installs `.zshrc` |
-| `vim`      | Installs `.vimrc`, the clangd config and vim-plug, then runs `:PlugInstall` |
+| `vim`      | Installs `.vimrc`, the clangd config, the Makefile template and vim-plug, then runs `:PlugInstall` |
+| `norminette` | Installs [norminette](https://github.com/42School/norminette), the 42 norm checker, with pipx |
 | `gh`       | Downloads the latest GitHub CLI release to `~/.local/bin/gh` (amd64/arm64) |
 | `claude`   | Installs Claude Code with the official installer if missing, the status line script, and merges `settings.json` |
 | `sublime`  | Installs Sublime Text from its official apt repository if missing, merges its settings and installs Package Control |
 | `fonts`    | Installs the MesloLGS NF font (recommended by Powerlevel10k) to `~/.local/share/fonts` |
 | `shell`    | Makes zsh your login shell with `chsh` (asks for your password) |
-| `git`      | Asks for your git name/email if no global identity is set |
+| `git`      | Installs the global gitignore, and asks for your git name/email if no global identity is set |
 
 Notes:
 
@@ -70,7 +82,9 @@ Notes:
 - After the `fonts` step, select "MesloLGS NF" in your terminal's preferences.
 - Your git identity is never stored in the repo: it usually differs between
   machines (personal vs. work).
-- Tested on a fresh `debian:trixie` container.
+- The global gitignore keeps C build products (`*.o`, `a.out`) and tool
+  files (clangd's `.cache/`, `compile_commands.json`) out of every repo.
+- Tested on every push by CI, see [Tests](#tests).
 
 ### How settings files are merged
 
@@ -189,6 +203,9 @@ To see gcc's own output: `:make` runs your Makefile, then `:copen` lists the
 errors (`Enter` on one jumps to it). Without a Makefile, `:make` compiles the
 current file alone with `cc -Wall -Wextra -Werror`.
 
+A new `Makefile` opened in vim starts from a template with the usual
+`all`, `clean`, `fclean` and `re` rules and the 42 flags.
+
 clangd only analyzes the code for the editor; you still compile with gcc. It
 works out of the box on a single folder of `.c` files. If your headers live
 elsewhere (e.g. `include/`), tell clangd how you build, once per project:
@@ -209,7 +226,25 @@ or create a `compile_flags.txt` at the project root, one flag per line:
 
 oh-my-zsh with the Powerlevel10k theme and the `git`, `zsh-autosuggestions`,
 `zsh-syntax-highlighting` and `fzf` plugins. `~/.local/bin` is added to
-`PATH` (that's where `gh` and `claude` are installed).
+`PATH` (that's where `gh`, `claude` and `norminette` are installed).
+
+`vg ./a.out` runs a program under valgrind with full leak checking
+(`--leak-check=full --show-leak-kinds=all --track-origins=yes`).
+
+## Tests
+
+GitHub Actions runs on every push:
+
+- `shellcheck` on all scripts;
+- `tests/statusline.sh`: feeds sample inputs to the status line (full data,
+  empty or invalid input, no rate limits, paths with spaces…) and checks the
+  output;
+- `tests/install-twice.sh` in a fresh `debian:trixie` container: runs the
+  full installer, then runs it again and fails if the second run still
+  changes anything.
+
+`sh tests/statusline.sh` is safe to run locally. `tests/install-twice.sh`
+really installs everything: only run it on a throwaway machine.
 
 ## License
 

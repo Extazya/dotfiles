@@ -75,3 +75,6 @@ imap <expr> <CR> pumvisible() ? "\<C-y>" : "\<CR>\<Plug>AutoPairsReturn"
 autocmd FileType c if !filereadable('Makefile') && !filereadable('makefile')
 	\ | setlocal makeprg=cc\ -Wall\ -Wextra\ -Werror\ %\ -o\ %<
 	\ | endif
+
+" New Makefiles start from the all/clean/fclean/re template
+autocmd BufNewFile Makefile,makefile 0read ~/.vim/templates/Makefile | $delete _ | 1

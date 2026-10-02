@@ -1,0 +1,16 @@
+# Global gitignore (~/.config/git/ignore, used by git when core.excludesFile
+# is unset): build products and editor/tool files, never worth committing.
+
+# C build products
+*.o
+*.d
+a.out
+
+# clangd / bear
+.cache/
+compile_commands.json
+
+# Editors and OS
+*.swp
+*~
+.DS_Store

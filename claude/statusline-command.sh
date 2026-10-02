@@ -48,9 +48,9 @@ esac
 # Basic ANSI colors only (16 + bright 9x variants) so the terminal theme
 # decides the actual shades.
 esc=$(printf '\033')
-RED="$esc[31m"; ORANGE="$esc[33m"; GREEN="$esc[32m"; BLUE="$esc[94m"
-MAGENTA="$esc[35m"; CYAN="$esc[36m"; GREY="$esc[90m"; BOLD="$esc[1m"
-RESET="$esc[0m"
+RED="${esc}[31m"; ORANGE="${esc}[33m"; GREEN="${esc}[32m"; BLUE="${esc}[94m"
+MAGENTA="${esc}[35m"; CYAN="${esc}[36m"; GREY="${esc}[90m"; BOLD="${esc}[1m"
+RESET="${esc}[0m"
 SEP="$GREY | $RESET"
 
 color_pct() {

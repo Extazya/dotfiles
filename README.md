@@ -85,7 +85,7 @@ draw a two-line status bar:
 
 ```
 Context: 42% (~58000 tokens left) | Session: 12m | ~/projects/demo -> main
-Quota: 18% (4h00m reset) | Weekly: 7% (2j14h reset) | Opus 5.5 · high
+Quota: 18% (4h00m reset) | Weekly: 7% (2d14h reset) | Opus 5.5 · high
 ```
 
 - **Context**: how full the context window is, and the tokens left.
@@ -98,7 +98,7 @@ Quota: 18% (4h00m reset) | Weekly: 7% (2j14h reset) | Opus 5.5 · high
 
 Percentages are green below 60%, yellow from 60% to 79% and red from 80%.
 Only the 16 basic ANSI colors are used, so the bar follows your terminal theme.
-If your plan has no rate limits, line 2 shows that quota data is unavailable.
+If your plan has no rate limits, line 2 shows `Quota: unavailable`.
 
 It refreshes on every session event and every 30 seconds (`refreshInterval`),
 so reset countdowns keep moving while idle. It needs `jq`.

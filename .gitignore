@@ -1,4 +1,4 @@
-# Données sensibles et locales
+# Sensitive and machine-local files
 claude/.credentials.json
 claude/history.jsonl
 claude/sessions/

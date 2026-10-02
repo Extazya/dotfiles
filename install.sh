@@ -12,7 +12,7 @@ set -eu
 
 DOTFILES="$(cd "$(dirname "$0")" && pwd)"
 ALL_STEPS="packages zsh vim gh claude fonts shell git"
-APT_PACKAGES="zsh vim git curl jq ripgrep fzf build-essential fontconfig ca-certificates"
+APT_PACKAGES="zsh vim git curl jq ripgrep fzf build-essential clangd bear fontconfig ca-certificates"
 
 DRY_RUN=0
 STEPS=$ALL_STEPS

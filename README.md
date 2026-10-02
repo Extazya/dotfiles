@@ -1,7 +1,7 @@
 # dotfiles
 
 My portable development environment: **zsh** (oh-my-zsh + Powerlevel10k),
-**vim** (gruvbox, NERDTree, fzf) and **Claude Code** (settings + a custom
+**vim** (gruvbox, NERDTree, fzf, clangd for C) and **Claude Code** (settings + a custom
 two-line status line showing context and real quota usage), with a single
 idempotent installer for Debian/Ubuntu.
 
@@ -45,7 +45,7 @@ re-run `./install.sh --only <step>`.
 
 | Step       | What it does |
 |------------|--------------|
-| `packages` | Installs missing apt packages: zsh, vim, git, curl, jq, ripgrep, fzf, build-essential, fontconfig, ca-certificates (uses `sudo`, or runs directly as root) |
+| `packages` | Installs missing apt packages: zsh, vim, git, curl, jq, ripgrep, fzf, build-essential, clangd, bear, fontconfig, ca-certificates (uses `sudo`, or runs directly as root) |
 | `zsh`      | Clones oh-my-zsh, Powerlevel10k, zsh-autosuggestions and zsh-syntax-highlighting, then installs `.zshrc` |
 | `vim`      | Installs `.vimrc` and vim-plug, then runs `:PlugInstall` |
 | `gh`       | Downloads the latest GitHub CLI release to `~/.local/bin/gh` (amd64/arm64) |
@@ -128,17 +128,43 @@ echo '{"workspace":{"current_dir":"'"$HOME"'"},
 
 ## vim
 
+Set up for plain C (42 norm style): 4-column tabs (real tabs, not spaces), a
+guide at column 81, tabs drawn as thin indent guides and trailing spaces as
+dots. Relative line numbers, smart-case search, no line wrapping.
+
 Plugins (via vim-plug): NERDTree, fzf + fzf.vim, vim-commentary,
-vim-surround, gruvbox (dark).
+vim-surround, gruvbox (dark), and [yegappan/lsp](https://github.com/yegappan/lsp)
+with **clangd** for C.
 
 | Key      | Action |
 |----------|--------|
 | `Ctrl-n` | Toggle NERDTree (also opens on startup) |
 | `Ctrl-p` | Find files (`:Files`) |
 | `Ctrl-f` | Search file contents with ripgrep (`:Rg`) |
+| `gd`     | Go to definition (`Ctrl-o` to come back) |
+| `gr`     | List references |
+| `K`      | Show the type / documentation of the symbol under the cursor |
+| `]d` `[d`| Next / previous error or warning |
 
-Relative line numbers, 4-column tabs (real tabs, not spaces), smart-case
-search, no line wrapping.
+Completion pops up automatically while typing: `Ctrl-n`/`Ctrl-p` to move,
+`Enter` to accept. Errors and warnings show up as you type, with a sign in the
+left column and the message at the end of the line.
+
+clangd only analyzes the code for the editor; you still compile with gcc. It
+works out of the box on a single folder of `.c` files. If your headers live
+elsewhere (e.g. `include/`), tell clangd how you build, once per project:
+
+```sh
+bear -- make        # records your gcc flags in compile_commands.json
+```
+
+or create a `compile_flags.txt` at the project root, one flag per line:
+
+```
+-std=c99
+-Wall
+-Iinclude
+```
 
 ## zsh
 

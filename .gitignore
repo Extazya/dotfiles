@@ -5,3 +5,4 @@ claude/sessions/
 claude/projects/
 claude/cache/
 claude/backups/
+compile_commands.json

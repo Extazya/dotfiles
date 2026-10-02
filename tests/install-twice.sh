@@ -6,6 +6,8 @@
 
 set -eu
 cd "$(dirname "$0")/.."
+# Never hand over to an interactive zsh at the end of a run
+export DOTFILES_NO_EXEC=1
 
 ./install.sh
 

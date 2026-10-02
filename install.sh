@@ -334,4 +334,14 @@ for s in $ALL_STEPS; do
     if wants "$s"; then "step_$s"; fi
 done
 
-printf '\n\033[1;32m==> Done.\033[0m Restart your shell: exec zsh\n'
+printf '\n\033[1;32m==> Done.\033[0m\n'
+
+# Switch straight into a fresh zsh so the new config applies, keeping this
+# output on screen. Only for a person at a terminal: not in dry-run, CI,
+# tests, or when stdin/stdout are redirected.
+if [ "$DRY_RUN" = 0 ] && wants zsh && has zsh && [ -t 0 ] && [ -t 1 ] \
+        && [ -z "${CI:-}" ] && [ -z "${DOTFILES_NO_EXEC:-}" ]; then
+    printf 'Starting a fresh zsh with the new config...\n'
+    exec zsh -l
+fi
+printf 'Restart your shell to apply the new config: exec zsh\n'

@@ -74,6 +74,10 @@ before pushing:
   up on every run are listed in its `allowed` pattern; keep that list short.
 - Tools installed to `~/.local/bin` must be found on the second run:
   install.sh prepends that directory to `PATH` for this reason.
+- At the end, install.sh `exec`s a login zsh, but only for a person at a
+  terminal (tty on stdin/stdout, not dry-run, no `CI`, no
+  `DOTFILES_NO_EXEC`). Anything that runs it non-interactively in a tty must
+  set `DOTFILES_NO_EXEC=1`, or it will hang in that zsh.
 
 ## settings.json
 

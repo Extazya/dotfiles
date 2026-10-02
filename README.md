@@ -15,8 +15,10 @@ git clone https://github.com/Extazya/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ./install.sh --dry-run   # see what would change
 ./install.sh             # do it
-exec zsh
 ```
+
+When it's done, the installer drops you straight into a fresh zsh with the
+new config (the install output stays on screen above it).
 
 Later, to get the latest version and apply it: `./install.sh --update`.
 

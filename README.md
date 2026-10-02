@@ -138,8 +138,8 @@ echo '{"workspace":{"current_dir":"'"$HOME"'"},
 
 ## Sublime Text
 
-Same choices as vim for plain C: real tabs 4 columns wide, a ruler at column
-80, tabs and trailing spaces drawn, trailing spaces removed and a final
+Same choices as vim for plain C (without the column-80 ruler): real tabs 4
+columns wide, tabs and trailing spaces drawn, trailing spaces removed and a final
 newline added on save. Brackets and quotes close automatically (built in).
 
 Packages: [LSP](https://lsp.sublimetext.io/) +

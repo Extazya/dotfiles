@@ -1,0 +1,9 @@
+{
+	"installed_packages": [
+		"Bitbake Syntax",
+		"C11",
+		"LSP",
+		"LSP-clangd",
+		"Package Control"
+	]
+}

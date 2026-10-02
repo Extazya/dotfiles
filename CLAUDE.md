@@ -28,8 +28,12 @@ only adds what is needed to maintain it.
   when there is nothing to do. A second run must change nothing.
 - `set -eu`: don't end a function with `[ cond ] && cmd` (a false condition
   makes the function return 1 and aborts the script). Use `if`.
-- The `settings.json` backup is only written when the merge actually changes
-  something.
+- `merge_json src dst [filter]` merges JSON settings (Claude, Sublime): repo
+  wins, local-only keys survive, `.bak` only when something changes. Sublime
+  files may have trailing commas: they are stripped before jq parses them. A
+  file jq still can't parse (comments) is left untouched with a warning.
+- Sublime package lists use an order-preserving union (`$l + ($r - $l)`):
+  `unique` would sort them and make every run report a change.
 
 ## Status line internals
 

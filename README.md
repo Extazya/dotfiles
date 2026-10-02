@@ -27,12 +27,16 @@ dotfiles/
 ├── vim/.vimrc                  → ~/.vimrc
 ├── clangd/config.yaml          → ~/.config/clangd/config.yaml
 ├── zsh/.zshrc                  → ~/.zshrc
-└── claude/
-    ├── settings.json           → merged into ~/.claude/settings.json
-    └── statusline-command.sh   → ~/.claude/statusline-command.sh
+├── claude/
+│   ├── settings.json           → merged into ~/.claude/settings.json
+│   └── statusline-command.sh   → ~/.claude/statusline-command.sh
+└── sublime/                    → merged into ~/.config/sublime-text/Packages/User/
+    ├── Preferences.sublime-settings
+    ├── LSP.sublime-settings
+    └── Package Control.sublime-settings
 ```
 
-Files are **copied**, not symlinked. To change one, edit it in the repo and
+Files are **copied** (settings files are **merged**, see below), not symlinked. To change one, edit it in the repo and
 re-run `./install.sh --only <step>`.
 
 ## Installer
@@ -51,6 +55,7 @@ re-run `./install.sh --only <step>`.
 | `vim`      | Installs `.vimrc`, the clangd config and vim-plug, then runs `:PlugInstall` |
 | `gh`       | Downloads the latest GitHub CLI release to `~/.local/bin/gh` (amd64/arm64) |
 | `claude`   | Installs Claude Code with the official installer if missing, the status line script, and merges `settings.json` |
+| `sublime`  | Installs Sublime Text from its official apt repository if missing, merges its settings and installs Package Control |
 | `fonts`    | Installs the MesloLGS NF font (recommended by Powerlevel10k) to `~/.local/share/fonts` |
 | `shell`    | Makes zsh your login shell with `chsh` (asks for your password) |
 | `git`      | Asks for your git name/email if no global identity is set |
@@ -66,18 +71,21 @@ Notes:
   machines (personal vs. work).
 - Tested on a fresh `debian:trixie` container.
 
-### How `settings.json` is merged
+### How settings files are merged
 
-Claude Code settings often contain machine- or project-specific keys that
-don't belong in a public repo. So instead of overwriting
-`~/.claude/settings.json`, the installer merges the repo's version into it:
+Claude Code and Sublime Text settings often contain machine- or
+project-specific keys (and Sublime rewrites its own files, e.g. when you zoom).
+So instead of overwriting them, the installer merges the repo's version into
+the existing file with `jq`:
 
-```sh
-jq -s '.[0] * .[1]' ~/.claude/settings.json claude/settings.json
-```
+- the repo wins on shared keys, and keys that only exist locally are kept;
+- arrays (such as Claude's permission lists) are replaced as a whole, except
+  Sublime's package lists, which keep their order and only gain the repo's
+  missing entries;
+- a file jq can't parse (e.g. one with `//` comments) is left untouched, with
+  a warning.
 
-The repo wins on shared keys, arrays (such as permission lists) are replaced
-as a whole, and keys that only exist locally are kept.
+The previous version is saved as `<file>.bak`, only when something changes.
 
 ## Claude Code status line
 
@@ -126,6 +134,21 @@ echo '{"workspace":{"current_dir":"'"$HOME"'"},
   pushes (`--force` and `-f`), `git reset --hard`, `dd`, `mkfs`, and their
   `sudo` variants. Deny rules take precedence over any allow rule, including
   ones in `settings.local.json`.
+
+## Sublime Text
+
+Same choices as vim for plain C: real tabs 4 columns wide, a ruler at column
+80, tabs and trailing spaces drawn, trailing spaces removed and a final
+newline added on save. Brackets and quotes close automatically (built in).
+
+Packages: [LSP](https://lsp.sublimetext.io/) +
+[LSP-clangd](https://github.com/sublimelsp/LSP-clangd) (errors as you type,
+completion, go to definition with `F12`), using the same clangd and the same
+42 flags as vim. Errors and warnings are shown at the end of the line. Also
+C11 and Bitbake Syntax. ClangAutoComplete, if present, is disabled to avoid
+two completion engines.
+
+Package Control installs the listed packages the next time Sublime starts.
 
 ## vim
 

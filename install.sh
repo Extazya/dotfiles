@@ -6,12 +6,12 @@
 #   ./install.sh --dry-run             print what would be done
 #   ./install.sh --only zsh,claude     run only some steps
 #
-# Steps: packages zsh vim gh claude fonts shell git
+# Steps: packages zsh vim gh claude sublime fonts shell git
 
 set -eu
 
 DOTFILES="$(cd "$(dirname "$0")" && pwd)"
-ALL_STEPS="packages zsh vim gh claude fonts shell git"
+ALL_STEPS="packages zsh vim gh claude sublime fonts shell git"
 APT_PACKAGES="zsh vim git curl jq ripgrep fzf build-essential clangd bear fontconfig ca-certificates"
 
 DRY_RUN=0
@@ -74,6 +74,34 @@ git_clone() {
     run git clone --depth 1 -q "$url" "$dst"
 }
 
+# Sets $sudo to "" (root) or "sudo"; fails if neither is available.
+as_root() {
+    if [ "$(id -u)" = 0 ]; then sudo=""
+    elif has sudo; then sudo=sudo
+    else return 1
+    fi
+}
+
+# Merges the repo's JSON settings into an existing file instead of overwriting
+# it, so keys only set locally survive. The repo wins on shared keys and arrays
+# are replaced, unless a custom jq filter is given ($l = local, $r = repo).
+# Trailing commas (allowed by Sublime) are stripped before parsing.
+merge_json() {
+    src=$1; dst=$2; filter=${3:-'$l * $r'}
+    if [ ! -f "$dst" ]; then install_file "$src" "$dst"; return; fi
+    if ! has jq; then warn "jq is required to merge $dst (run the packages step)"; return; fi
+    strip='s/,([[:space:]]*[]}])/\1/g'
+    if ! merged=$(jq -n --argjson l "$(sed -zE "$strip" "$dst")" \
+                        --argjson r "$(sed -zE "$strip" "$src")" "$filter" 2>/dev/null); then
+        warn "$dst is not plain JSON (comments?), left untouched: merge $src by hand"
+        return
+    fi
+    if [ "$merged" = "$(sed -zE "$strip" "$dst" | jq .)" ]; then skip "$dst"; return; fi
+    info "$dst merged (previous version: $dst.bak)"
+    run cp "$dst" "$dst.bak"
+    if [ "$DRY_RUN" = 0 ]; then printf '%s\n' "$merged" > "$dst"; fi
+}
+
 # ── packages ───────────────────────────────────────────────────────────────
 step_packages() {
     step "System packages (apt)"
@@ -87,11 +115,7 @@ step_packages() {
     done
     if [ -z "$missing" ]; then skip "$APT_PACKAGES"; return; fi
     info "to install:$missing"
-    if [ "$(id -u)" = 0 ]; then
-        sudo=""
-    elif has sudo; then
-        sudo=sudo
-    else
+    if ! as_root; then
         warn "neither root nor sudo, run as root: apt-get install$missing"
         return
     fi
@@ -168,26 +192,47 @@ step_claude() {
     install_file "$DOTFILES/claude/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
     run chmod +x "$HOME/.claude/statusline-command.sh"
 
-    # Merge instead of copy: machine-specific keys (project autoMode, etc.)
-    # are not in the repo and must survive the install. The repo wins on
-    # shared keys; arrays are replaced.
-    settings="$HOME/.claude/settings.json"
-    if [ ! -f "$settings" ]; then
-        install_file "$DOTFILES/claude/settings.json" "$settings"
-        return
+    # Machine-specific keys (project autoMode, etc.) are not in the repo
+    merge_json "$DOTFILES/claude/settings.json" "$HOME/.claude/settings.json"
+}
+
+# ── sublime ────────────────────────────────────────────────────────────────
+step_sublime() {
+    step "Sublime Text: editor, settings, packages"
+    if has subl; then
+        skip "sublime-text"
+    elif ! has apt-get || ! as_root; then
+        warn "needs apt and root/sudo: see https://www.sublimetext.com/docs/linux_repositories.html"
+    else
+        info "official apt repository + sublime-text"
+        run $sudo mkdir -p /etc/apt/keyrings
+        run sh -c "curl -fsSL https://download.sublimetext.com/sublimehq-pub.gpg \
+            | $sudo tee /etc/apt/keyrings/sublimehq-pub.asc >/dev/null"
+        run sh -c "printf 'Types: deb\nURIs: https://download.sublimetext.com/\nSuites: apt/stable/\nSigned-By: /etc/apt/keyrings/sublimehq-pub.asc\n' \
+            | $sudo tee /etc/apt/sources.list.d/sublime-text.sources >/dev/null"
+        run $sudo apt-get update -q
+        run $sudo apt-get install -y -q sublime-text
     fi
-    if ! has jq; then
-        warn "jq is required to merge $settings (run the packages step)"
-        return
-    fi
-    merged=$(jq -s '.[0] * .[1]' "$settings" "$DOTFILES/claude/settings.json")
-    if [ "$merged" = "$(jq . "$settings")" ]; then
-        skip "$settings"; return
-    fi
-    info "$settings merged (previous version: $settings.bak)"
-    run cp "$settings" "$settings.bak"
-    if [ "$DRY_RUN" = 0 ]; then
-        printf '%s\n' "$merged" > "$settings"
+
+    # Sublime rewrites these files itself (zoom, packages installed from the
+    # UI), hence merging. Package lists keep their order and only gain the
+    # repo's missing entries, never shrink.
+    user="$HOME/.config/sublime-text/Packages/User"
+    merge_json "$DOTFILES/sublime/Preferences.sublime-settings" "$user/Preferences.sublime-settings" \
+        '($l * $r) | .ignored_packages = ($l.ignored_packages // []) + ($r.ignored_packages - ($l.ignored_packages // []))'
+    merge_json "$DOTFILES/sublime/LSP.sublime-settings" "$user/LSP.sublime-settings"
+    merge_json "$DOTFILES/sublime/Package Control.sublime-settings" "$user/Package Control.sublime-settings" \
+        '($l * $r) | .installed_packages = ($l.installed_packages // []) + ($r.installed_packages - ($l.installed_packages // []))'
+
+    # Package Control installs every package listed in installed_packages
+    # that is missing, the next time Sublime starts.
+    pc="$HOME/.config/sublime-text/Installed Packages/Package Control.sublime-package"
+    if [ -f "$pc" ]; then
+        skip "Package Control"
+    else
+        info "Package Control"
+        run curl -fsSLo "$pc" --create-dirs \
+            https://github.com/wbond/package_control/releases/latest/download/Package.Control.sublime-package
     fi
 }
 

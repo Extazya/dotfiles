@@ -38,7 +38,12 @@ set background=dark
 
 " NERDTree
 nnoremap <C-n> :NERDTreeToggle<CR>
-autocmd VimEnter * NERDTree | wincmd p
+" Open the tree only when browsing: `vim` alone or `vim <dir>`, not for files
+" (so not for `git commit` either)
+autocmd StdinReadPre * let s:std_in = 1
+autocmd VimEnter * if !exists('s:std_in') && argc() == 0 | NERDTree | wincmd p | endif
+autocmd VimEnter * if !exists('s:std_in') && argc() == 1 && isdirectory(argv()[0])
+	\ | execute 'NERDTree' argv()[0] | wincmd p | enew | execute 'cd' argv()[0] | endif
 
 " fzf
 nnoremap <C-p> :Files<CR>

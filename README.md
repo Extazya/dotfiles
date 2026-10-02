@@ -180,7 +180,7 @@ and [yegappan/lsp](https://github.com/yegappan/lsp) with **clangd** for C.
 
 | Key      | Action |
 |----------|--------|
-| `Ctrl-n` | Toggle NERDTree (also opens on startup) |
+| `Ctrl-n` | Toggle NERDTree (opens by itself for `vim` or `vim <dir>`, not when opening a file) |
 | `Ctrl-p` | Find files (`:Files`) |
 | `Ctrl-f` | Search file contents with ripgrep (`:Rg`) |
 | `gd`     | Go to definition (`Ctrl-o` to come back) |

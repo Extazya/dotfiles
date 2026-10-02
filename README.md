@@ -25,6 +25,7 @@ and skips it. Any existing file it replaces is first backed up as
 dotfiles/
 ├── install.sh                  installer (see below)
 ├── vim/.vimrc                  → ~/.vimrc
+├── clangd/config.yaml          → ~/.config/clangd/config.yaml
 ├── zsh/.zshrc                  → ~/.zshrc
 └── claude/
     ├── settings.json           → merged into ~/.claude/settings.json
@@ -47,7 +48,7 @@ re-run `./install.sh --only <step>`.
 |------------|--------------|
 | `packages` | Installs missing apt packages: zsh, vim, git, curl, jq, ripgrep, fzf, build-essential, clangd, bear, fontconfig, ca-certificates (uses `sudo`, or runs directly as root) |
 | `zsh`      | Clones oh-my-zsh, Powerlevel10k, zsh-autosuggestions and zsh-syntax-highlighting, then installs `.zshrc` |
-| `vim`      | Installs `.vimrc` and vim-plug, then runs `:PlugInstall` |
+| `vim`      | Installs `.vimrc`, the clangd config and vim-plug, then runs `:PlugInstall` |
 | `gh`       | Downloads the latest GitHub CLI release to `~/.local/bin/gh` (amd64/arm64) |
 | `claude`   | Installs Claude Code with the official installer if missing, the status line script, and merges `settings.json` |
 | `fonts`    | Installs the MesloLGS NF font (recommended by Powerlevel10k) to `~/.local/share/fonts` |
@@ -154,6 +155,14 @@ block, and `Backspace` in an empty pair deletes both.
 Completion pops up automatically while typing: `Ctrl-n`/`Ctrl-p` to move,
 `Enter` to accept. Errors and warnings show up as you type, with a sign in the
 left column and the message at the end of the line.
+
+Errors are checked with the 42 flags `-Wall -Wextra -Werror` (set in
+`clangd/config.yaml`), so any warning shows up as an error, like gcc would
+report it.
+
+To see gcc's own output: `:make` runs your Makefile, then `:copen` lists the
+errors (`Enter` on one jumps to it). Without a Makefile, `:make` compiles the
+current file alone with `cc -Wall -Wextra -Werror`.
 
 clangd only analyzes the code for the editor; you still compile with gcc. It
 works out of the box on a single folder of `.c` files. If your headers live

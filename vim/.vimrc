@@ -70,3 +70,8 @@ autocmd User LspAttached nnoremap <buffer> <silent> gl <cmd>LspDiag current<CR>
 let g:AutoPairsMapBS = 1
 let g:AutoPairsMapCR = 0
 imap <expr> <CR> pumvisible() ? "\<C-y>" : "\<CR>\<Plug>AutoPairsReturn"
+
+" :make without a Makefile compiles the current file alone with the 42 flags
+autocmd FileType c if !filereadable('Makefile') && !filereadable('makefile')
+	\ | setlocal makeprg=cc\ -Wall\ -Wextra\ -Werror\ %\ -o\ %<
+	\ | endif

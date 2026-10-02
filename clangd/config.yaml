@@ -1,0 +1,4 @@
+# 42 norm flags, added to every C file clangd analyzes (on top of the
+# project's compile_commands.json / compile_flags.txt, if any).
+CompileFlags:
+  Add: [-Wall, -Wextra, -Werror]

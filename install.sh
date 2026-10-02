@@ -116,8 +116,9 @@ step_zsh() {
 
 # ── vim ────────────────────────────────────────────────────────────────────
 step_vim() {
-    step "vim: .vimrc, vim-plug, plugins"
+    step "vim: .vimrc, clangd config, vim-plug, plugins"
     install_file "$DOTFILES/vim/.vimrc" "$HOME/.vimrc"
+    install_file "$DOTFILES/clangd/config.yaml" "$HOME/.config/clangd/config.yaml"
     if [ -f "$HOME/.vim/autoload/plug.vim" ]; then
         skip "vim-plug"
     else

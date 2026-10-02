@@ -1,0 +1,40 @@
+{
+  "theme": "dark",
+  "model": "opus",
+  "effortLevel": "high",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "high"
+    }
+  },
+  "tui": "default",
+  "switchModelsOnFlag": false,
+  "statusLine": {
+    "type": "command",
+    "command": "sh ~/.claude/statusline-command.sh",
+    "refreshInterval": 30
+  },
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "Edit(*)",
+      "Write(*)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(rm -fr *)",
+      "Bash(sudo rm -rf *)",
+      "Bash(sudo rm -fr *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)",
+      "Bash(git reset --hard*)",
+      "Bash(dd if=*)",
+      "Bash(sudo dd *)",
+      "Bash(mkfs*)",
+      "Bash(sudo mkfs*)"
+    ]
+  }
+}

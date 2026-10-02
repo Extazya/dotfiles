@@ -221,6 +221,9 @@ step_sublime() {
     merge_json "$DOTFILES/sublime/Preferences.sublime-settings" "$user/Preferences.sublime-settings" \
         '($l * $r) | .ignored_packages = ($l.ignored_packages // []) + ($r.ignored_packages - ($l.ignored_packages // []))'
     merge_json "$DOTFILES/sublime/LSP.sublime-settings" "$user/LSP.sublime-settings"
+    # LSP ships its F12 (go to definition) binding commented out
+    merge_json "$DOTFILES/sublime/Default (Linux).sublime-keymap" "$user/Default (Linux).sublime-keymap" \
+        '$l + ($r - $l)'
     merge_json "$DOTFILES/sublime/Package Control.sublime-settings" "$user/Package Control.sublime-settings" \
         '($l * $r) | .installed_packages = ($l.installed_packages // []) + ($r.installed_packages - ($l.installed_packages // []))'
 

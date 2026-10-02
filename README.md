@@ -33,6 +33,7 @@ dotfiles/
 └── sublime/                    → merged into ~/.config/sublime-text/Packages/User/
     ├── Preferences.sublime-settings
     ├── LSP.sublime-settings
+    ├── Default (Linux).sublime-keymap
     └── Package Control.sublime-settings
 ```
 
@@ -143,7 +144,8 @@ newline added on save. Brackets and quotes close automatically (built in).
 
 Packages: [LSP](https://lsp.sublimetext.io/) +
 [LSP-clangd](https://github.com/sublimelsp/LSP-clangd) (errors as you type,
-completion, go to definition with `F12`), using the same clangd and the same
+completion, `F12` to go to definition, `Shift+F12` for references), using the
+same clangd and the same
 42 flags as vim. Errors and warnings are shown at the end of the line. Also
 C11 and Bitbake Syntax. ClangAutoComplete, if present, is disabled to avoid
 two completion engines.

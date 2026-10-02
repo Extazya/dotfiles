@@ -145,6 +145,7 @@ and [yegappan/lsp](https://github.com/yegappan/lsp) with **clangd** for C.
 | `gr`     | List references |
 | `K`      | Show the type / documentation of the symbol under the cursor |
 | `]d` `[d`| Next / previous error or warning |
+| `gl`     | Show the full error message for the current line |
 
 Brackets and quotes close automatically: typing `(` gives `()`, typing the
 closing one yourself just steps over it, `{` then `Enter` opens an indented

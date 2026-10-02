@@ -47,7 +47,10 @@ nnoremap <C-f> :Rg<CR>
 " LSP (clangd): completion, go to definition, errors as you type.
 " clangd only analyzes the code; compiling stays with gcc. For a project with
 " a Makefile, run `bear -- make` once so clangd knows the include paths.
-autocmd User LspSetup call LspOptionsSet(#{noNewlineInCompletion: v:true})
+autocmd User LspSetup call LspOptionsSet(#{
+	\ noNewlineInCompletion: v:true,
+	\ showDiagWithVirtualText: v:true,
+	\ })
 autocmd User LspSetup call LspAddServer([#{
 	\ name: 'clangd',
 	\ filetype: ['c', 'cpp'],
@@ -59,6 +62,7 @@ autocmd User LspAttached nnoremap <buffer> <silent> gr <cmd>LspShowReferences<CR
 autocmd User LspAttached nnoremap <buffer> <silent> K  <cmd>LspHover<CR>
 autocmd User LspAttached nnoremap <buffer> <silent> ]d <cmd>LspDiag next<CR>
 autocmd User LspAttached nnoremap <buffer> <silent> [d <cmd>LspDiag prev<CR>
+autocmd User LspAttached nnoremap <buffer> <silent> gl <cmd>LspDiag current<CR>
 
 " Auto-close (), [], {}, quotes. Backspace inside an empty pair deletes both.
 " Enter is mapped once here: accept the completion menu if it's open,

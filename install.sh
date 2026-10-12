@@ -20,7 +20,7 @@ DOTFILES="$(cd "$(dirname "$0")" && pwd)"
 # directory, so make them visible to later steps (and to idempotence checks).
 export PATH="$HOME/.local/bin:$PATH"
 ALL_STEPS="packages zsh vim norminette gh claude sublime fonts shell git"
-APT_PACKAGES="zsh vim git curl jq ripgrep fzf build-essential clangd bear valgrind pipx fontconfig ca-certificates"
+APT_PACKAGES="zsh vim git curl jq ripgrep fzf bat tree build-essential clangd bear gdb valgrind pipx fontconfig ca-certificates"
 
 DRY_RUN=0
 UPDATE=0

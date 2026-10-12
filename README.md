@@ -4,7 +4,7 @@
 
 My portable development environment for plain C: **zsh** (oh-my-zsh +
 Powerlevel10k), **vim** and **Sublime Text** (clangd with the 42 flags),
-**Sublime Merge**, norminette, valgrind, and **Claude Code** (settings + a
+**Sublime Merge**, norminette, gdb, valgrind, and **Claude Code** (settings + a
 custom two-line status line showing context and real quota usage), with a
 single idempotent installer for Debian/Ubuntu.
 
@@ -66,7 +66,7 @@ symlinked. To change one, edit it in the repo and re-run
 
 | Step       | What it does |
 |------------|--------------|
-| `packages` | Installs missing apt packages: zsh, vim, git, curl, jq, ripgrep, fzf, build-essential, clangd, bear, valgrind, pipx, fontconfig, ca-certificates (uses `sudo`, or runs directly as root) |
+| `packages` | Installs missing apt packages: zsh, vim, git, curl, jq, ripgrep, fzf, bat, tree, build-essential, clangd, bear, gdb, valgrind, pipx, fontconfig, ca-certificates (uses `sudo`, or runs directly as root) |
 | `zsh`      | Clones oh-my-zsh, Powerlevel10k, zsh-autosuggestions and zsh-syntax-highlighting, then installs `.zshrc`. With `--update`, pulls the clones that are behind |
 | `vim`      | Installs `.vimrc`, the clangd config, the Makefile template and vim-plug, then runs `:PlugInstall` (`:PlugUpgrade` and `:PlugUpdate` with `--update`) |
 | `norminette` | Installs [norminette](https://github.com/42School/norminette), the 42 norm checker, with pipx. With `--update`, upgrades it if PyPI has a newer version |
@@ -196,6 +196,9 @@ and [yegappan/lsp](https://github.com/yegappan/lsp) with **clangd** for C.
 | `K`      | Show the type / documentation of the symbol under the cursor |
 | `]d` `[d`| Next / previous error or warning |
 | `gl`     | Show the full error message for the current line |
+
+`Ctrl-p` and `Ctrl-f` preview the selected file with syntax highlighting
+(bat, installed as `batcat` on Debian).
 
 Brackets and quotes close automatically: typing `(` gives `()`, typing the
 closing one yourself just steps over it, `{` then `Enter` opens an indented

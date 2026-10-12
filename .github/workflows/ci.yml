@@ -10,7 +10,7 @@ jobs:
     name: shellcheck + status line tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: shellcheck
         run: shellcheck install.sh claude/statusline-command.sh tests/*.sh
       - name: status line
@@ -27,7 +27,7 @@ jobs:
           DEBIAN_FRONTEND=noninteractive apt-get install -y -qq sudo passwd git >/dev/null
           useradd -m -s /bin/bash dev
           echo "dev ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/dev
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install twice, second run must change nothing
         run: |
           cp -r "$GITHUB_WORKSPACE" /home/dev/dotfiles

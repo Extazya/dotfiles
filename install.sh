@@ -221,9 +221,12 @@ step_gh() {
         run "download latest cli/cli release (linux_$arch) to ~/.local/bin/gh"
         return
     fi
-    version=$(curl -fsSL https://api.github.com/repos/cli/cli/releases/latest | jq -r .tag_name) || version=""
-    version=${version#v}
-    if [ -z "$version" ]; then warn "GitHub API unreachable, gh not installed or updated"; return; fi
+    # releases/latest redirects to the tag page: no API call, so no rate limit
+    url=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/cli/cli/releases/latest) || url=""
+    case "$url" in
+        */tag/v*) version=${url##*/tag/v} ;;
+        *) warn "github.com unreachable, gh not installed or updated"; return ;;
+    esac
     if [ "$version" = "$current" ]; then skip "gh $current"; return; fi
     if [ -n "$current" ]; then info "gh $current -> $version"; else info "gh $version"; fi
     if [ "$DRY_RUN" = 1 ]; then

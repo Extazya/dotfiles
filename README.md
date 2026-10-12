@@ -21,6 +21,8 @@ When it's done, the installer drops you straight into a fresh zsh with the
 new config (the install output stays on screen above it).
 
 Later, to get the latest version and apply it: `./install.sh --update`.
+It also updates the tools the installer fetched itself (gh, the zsh plugins,
+the vim plugins, norminette). System packages stay with `apt upgrade`.
 
 The installer is safe to re-run: every step checks what is already in place
 and skips it. Any existing file it replaces is first backed up as
@@ -58,17 +60,17 @@ symlinked. To change one, edit it in the repo and re-run
 ./install.sh                     # all steps
 ./install.sh --dry-run           # print what would be done, change nothing
 ./install.sh --only zsh,claude   # run only some steps
-./install.sh --update           # git pull the repo first, then install
+./install.sh --update            # git pull the repo first, then install and update tools
 ./install.sh --help
 ```
 
 | Step       | What it does |
 |------------|--------------|
 | `packages` | Installs missing apt packages: zsh, vim, git, curl, jq, ripgrep, fzf, build-essential, clangd, bear, valgrind, pipx, fontconfig, ca-certificates (uses `sudo`, or runs directly as root) |
-| `zsh`      | Clones oh-my-zsh, Powerlevel10k, zsh-autosuggestions and zsh-syntax-highlighting, then installs `.zshrc` |
-| `vim`      | Installs `.vimrc`, the clangd config, the Makefile template and vim-plug, then runs `:PlugInstall` |
-| `norminette` | Installs [norminette](https://github.com/42School/norminette), the 42 norm checker, with pipx |
-| `gh`       | Downloads the latest GitHub CLI release to `~/.local/bin/gh` (amd64/arm64) |
+| `zsh`      | Clones oh-my-zsh, Powerlevel10k, zsh-autosuggestions and zsh-syntax-highlighting, then installs `.zshrc`. With `--update`, pulls the clones that are behind |
+| `vim`      | Installs `.vimrc`, the clangd config, the Makefile template and vim-plug, then runs `:PlugInstall` (`:PlugUpgrade` and `:PlugUpdate` with `--update`) |
+| `norminette` | Installs [norminette](https://github.com/42School/norminette), the 42 norm checker, with pipx. With `--update`, upgrades it if PyPI has a newer version |
+| `gh`       | Downloads the latest GitHub CLI release to `~/.local/bin/gh` (amd64/arm64). With `--update`, replaces it when a newer release is out |
 | `claude`   | Installs Claude Code with the official installer if missing, the status line script, and merges `settings.json` |
 | `sublime`  | Installs Sublime Text from its official apt repository if missing, merges its settings and installs Package Control |
 | `fonts`    | Installs the MesloLGS NF font (recommended by Powerlevel10k) to `~/.local/share/fonts` |

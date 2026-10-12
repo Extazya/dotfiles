@@ -6,6 +6,8 @@
 #   ./install.sh --dry-run             print what would be done
 #   ./install.sh --only zsh,claude     run only some steps
 #   ./install.sh --update              git pull the repo first, then install
+#                                      and update gh, zsh plugins, vim
+#                                      plugins and norminette
 #
 # Steps: packages zsh vim norminette gh claude sublime fonts shell git
 
@@ -28,7 +30,7 @@ ARGS=()
 usage() { sed -n '2,/^$/s/^# \{0,1\}//p' "$0"; }
 
 while [ $# -gt 0 ]; do
-    [ "$1" = --update ] || ARGS+=("$1")
+    ARGS+=("$1")
     case "$1" in
         -n|--dry-run) DRY_RUN=1 ;;
         --update) UPDATE=1 ;;
@@ -78,11 +80,22 @@ install_file() {
     run cp "$src" "$dst"
 }
 
+# With --update, an existing clone is fast-forwarded to its upstream.
+# ls-remote rather than fetch, so that a dry-run leaves the clone untouched.
 git_clone() {
     url=$1; dst=$2
-    if [ -d "$dst" ]; then skip "$dst"; return; fi
-    info "clone $url"
-    run git clone --depth 1 -q "$url" "$dst"
+    if [ ! -d "$dst" ]; then
+        info "clone $url"
+        run git clone --depth 1 -q "$url" "$dst"
+        return
+    fi
+    if [ "$UPDATE" = 0 ]; then skip "$dst"; return; fi
+    branch=$(git -C "$dst" rev-parse --abbrev-ref HEAD)
+    remote=$(git -C "$dst" ls-remote origin "refs/heads/$branch" 2>/dev/null | cut -f1)
+    if [ -z "$remote" ]; then warn "$dst: origin unreachable, not updated"; return; fi
+    if [ "$remote" = "$(git -C "$dst" rev-parse HEAD)" ]; then skip "$dst"; return; fi
+    info "update $dst"
+    run git -C "$dst" pull --ff-only -q || warn "$dst has local changes, update it by hand"
 }
 
 # Sets $sudo to "" (root) or "sudo"; fails if neither is available.
@@ -162,43 +175,68 @@ step_vim() {
         run curl -fsSLo "$HOME/.vim/autoload/plug.vim" --create-dirs \
             https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
     fi
-    info "PlugInstall"
-    run sh -c 'vim -E -s -u "$HOME/.vimrc" +PlugInstall +qall >/dev/null 2>&1 || true'
+    if [ "$UPDATE" = 1 ]; then
+        info "PlugUpgrade, PlugUpdate"
+        run sh -c 'vim -E -s -u "$HOME/.vimrc" +PlugUpgrade +PlugUpdate +qall >/dev/null 2>&1 || true'
+    else
+        info "PlugInstall"
+        run sh -c 'vim -E -s -u "$HOME/.vimrc" +PlugInstall +qall >/dev/null 2>&1 || true'
+    fi
 }
 
 # ── norminette ─────────────────────────────────────────────────────────────
 step_norminette() {
     step "norminette (42 norm checker, via pipx)"
-    if has norminette; then
-        skip "norminette"; return
+    if ! has norminette; then
+        if ! has pipx; then warn "pipx not found (run the packages step)"; return; fi
+        run pipx install norminette
+        return
     fi
-    if ! has pipx; then warn "pipx not found (run the packages step)"; return; fi
-    run pipx install norminette
+    current=$(norminette --version | awk '{print $2}' | tr -d ,)
+    if [ "$UPDATE" = 0 ]; then skip "norminette $current"; return; fi
+    latest=$(curl -fsSL https://pypi.org/pypi/norminette/json | jq -r .info.version) || latest=""
+    if [ -z "$latest" ]; then warn "PyPI unreachable, norminette not updated"; return; fi
+    if [ "$current" = "$latest" ]; then skip "norminette $current"; return; fi
+    info "norminette $current -> $latest"
+    run pipx upgrade norminette
 }
 
 # ── gh ─────────────────────────────────────────────────────────────────────
 step_gh() {
     step "GitHub CLI (~/.local/bin/gh)"
-    if has gh; then skip "gh $(gh --version | head -1 | awk '{print $3}')"; return; fi
+    current=""
+    if has gh; then
+        current=$(gh --version | head -1 | awk '{print $3}')
+        # A gh from apt or elsewhere is left to its own package manager
+        if [ "$UPDATE" = 0 ] || [ "$(command -v gh)" != "$HOME/.local/bin/gh" ]; then
+            skip "gh $current"; return
+        fi
+    fi
     case "$(uname -m)" in
         x86_64)  arch=amd64 ;;
         aarch64) arch=arm64 ;;
         *) warn "unsupported architecture $(uname -m), skipping gh"; return ;;
     esac
-    if [ "$DRY_RUN" = 1 ]; then
+    if [ "$DRY_RUN" = 1 ] && [ -z "$current" ]; then
         run "download latest cli/cli release (linux_$arch) to ~/.local/bin/gh"
         return
     fi
-    version=$(curl -fsSL https://api.github.com/repos/cli/cli/releases/latest | jq -r .tag_name)
+    version=$(curl -fsSL https://api.github.com/repos/cli/cli/releases/latest | jq -r .tag_name) || version=""
     version=${version#v}
-    info "gh $version"
+    if [ -z "$version" ]; then warn "GitHub API unreachable, gh not installed or updated"; return; fi
+    if [ "$version" = "$current" ]; then skip "gh $current"; return; fi
+    if [ -n "$current" ]; then info "gh $current -> $version"; else info "gh $version"; fi
+    if [ "$DRY_RUN" = 1 ]; then
+        run "download cli/cli v$version (linux_$arch) to ~/.local/bin/gh"
+        return
+    fi
     tmp=$(mktemp -d)
     curl -fsSL "https://github.com/cli/cli/releases/download/v$version/gh_${version}_linux_$arch.tar.gz" \
         | tar -xz -C "$tmp"
     mkdir -p "$HOME/.local/bin"
     cp "$tmp/gh_${version}_linux_$arch/bin/gh" "$HOME/.local/bin/gh"
     rm -r "$tmp"
-    info "next: gh auth login"
+    if [ -z "$current" ]; then info "next: gh auth login"; fi
 }
 
 # ── claude ─────────────────────────────────────────────────────────────────
@@ -315,14 +353,15 @@ step_git() {
 }
 
 # ── main ───────────────────────────────────────────────────────────────────
-if [ "$UPDATE" = 1 ]; then
+if [ "$UPDATE" = 1 ] && [ -z "${DOTFILES_PULLED:-}" ]; then
     step "Update the dotfiles repo"
     if [ "$DRY_RUN" = 1 ]; then
         run git -C "$DOTFILES" pull --ff-only
     else
         git -C "$DOTFILES" pull --ff-only
-        # Re-exec so the steps run with the freshly pulled version of this script
-        exec "$DOTFILES/install.sh" ${ARGS[@]+"${ARGS[@]}"}
+        # Re-exec so the steps run with the freshly pulled version of this
+        # script, keeping --update for the tools but without pulling again
+        DOTFILES_PULLED=1 exec "$DOTFILES/install.sh" "${ARGS[@]}"
     fi
 fi
 

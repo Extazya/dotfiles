@@ -4,9 +4,9 @@
 
 My portable development environment for plain C: **zsh** (oh-my-zsh +
 Powerlevel10k), **vim** and **Sublime Text** (clangd with the 42 flags),
-norminette, valgrind, and **Claude Code** (settings + a custom two-line status
-line showing context and real quota usage), with a single idempotent
-installer for Debian/Ubuntu.
+**Sublime Merge**, norminette, valgrind, and **Claude Code** (settings + a
+custom two-line status line showing context and real quota usage), with a
+single idempotent installer for Debian/Ubuntu.
 
 ## Quick start
 
@@ -72,7 +72,7 @@ symlinked. To change one, edit it in the repo and re-run
 | `norminette` | Installs [norminette](https://github.com/42School/norminette), the 42 norm checker, with pipx. With `--update`, upgrades it if PyPI has a newer version |
 | `gh`       | Downloads the latest GitHub CLI release to `~/.local/bin/gh` (amd64/arm64). With `--update`, replaces it when a newer release is out |
 | `claude`   | Installs Claude Code with the official installer if missing, the status line script, and merges `settings.json` |
-| `sublime`  | Installs Sublime Text from its official apt repository if missing, merges its settings and installs Package Control |
+| `sublime`  | Installs Sublime Text and Sublime Merge from their official apt repository if missing, merges Sublime Text's settings and installs Package Control |
 | `fonts`    | Installs the MesloLGS NF font (recommended by Powerlevel10k) to `~/.local/share/fonts` |
 | `shell`    | Makes zsh your login shell with `chsh` (asks for your password) |
 | `git`      | Installs the global gitignore, and asks for your git name/email if no global identity is set |
@@ -165,10 +165,16 @@ Packages: [LSP](https://lsp.sublimetext.io/) +
 completion, `F12` to go to definition, `Shift+F12` for references), using the
 same clangd and the same
 42 flags as vim. Errors and warnings are shown at the end of the line. Also
-C11 and Bitbake Syntax. ClangAutoComplete, if present, is disabled to avoid
+C11, Bitbake Syntax and [GitSavvy](https://github.com/timbrel/GitSavvy) (git
+from the command palette: `git: status`, `git: diff`, `git: log`...).
+ClangAutoComplete, if present, is disabled to avoid
 two completion engines.
 
 Package Control installs the listed packages the next time Sublime starts.
+
+[Sublime Merge](https://www.sublimemerge.com/) (`smerge`), the git client
+by the makers of Sublime Text, is installed alongside with its default
+settings.
 
 ## vim
 

@@ -2,6 +2,7 @@
 	"installed_packages": [
 		"Bitbake Syntax",
 		"C11",
+		"GitSavvy",
 		"LSP",
 		"LSP-clangd",
 		"Package Control"

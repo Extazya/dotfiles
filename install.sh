@@ -261,20 +261,31 @@ step_claude() {
 
 # ── sublime ────────────────────────────────────────────────────────────────
 step_sublime() {
-    step "Sublime Text: editor, settings, packages"
-    if has subl; then
-        skip "sublime-text"
-    elif ! has apt-get || ! as_root; then
-        warn "needs apt and root/sudo: see https://www.sublimetext.com/docs/linux_repositories.html"
-    else
-        info "official apt repository + sublime-text"
-        run $sudo mkdir -p /etc/apt/keyrings
-        run sh -c "curl -fsSL https://download.sublimetext.com/sublimehq-pub.gpg \
-            | $sudo tee /etc/apt/keyrings/sublimehq-pub.asc >/dev/null"
-        run sh -c "printf 'Types: deb\nURIs: https://download.sublimetext.com/\nSuites: apt/stable/\nSigned-By: /etc/apt/keyrings/sublimehq-pub.asc\n' \
-            | $sudo tee /etc/apt/sources.list.d/sublime-text.sources >/dev/null"
-        run $sudo apt-get update -q
-        run $sudo apt-get install -y -q sublime-text
+    step "Sublime Text and Sublime Merge: editors, settings, packages"
+    missing=""
+    if has subl; then skip "sublime-text"; else missing="sublime-text"; fi
+    if has smerge; then skip "sublime-merge"; else missing="$missing sublime-merge"; fi
+    if [ -n "$missing" ]; then
+        if ! has apt-get || ! as_root; then
+            warn "needs apt and root/sudo: see https://www.sublimetext.com/docs/linux_repositories.html"
+        else
+            # Both come from the same repository, which may already be set up
+            # under another file name
+            if grep -rqs download.sublimetext.com /etc/apt/sources.list /etc/apt/sources.list.d/; then
+                skip "Sublime HQ apt repository"
+            else
+                info "Sublime HQ apt repository"
+                run $sudo mkdir -p /etc/apt/keyrings
+                run sh -c "curl -fsSL https://download.sublimetext.com/sublimehq-pub.gpg \
+                    | $sudo tee /etc/apt/keyrings/sublimehq-pub.asc >/dev/null"
+                run sh -c "printf 'Types: deb\nURIs: https://download.sublimetext.com/\nSuites: apt/stable/\nSigned-By: /etc/apt/keyrings/sublimehq-pub.asc\n' \
+                    | $sudo tee /etc/apt/sources.list.d/sublime-text.sources >/dev/null"
+            fi
+            info "to install: ${missing# }"
+            run $sudo apt-get update -q
+            # shellcheck disable=SC2086
+            run $sudo apt-get install -y -q $missing
+        fi
     fi
 
     # Sublime rewrites these files itself (zoom, packages installed from the

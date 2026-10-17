@@ -129,7 +129,8 @@ Only the 16 basic ANSI colors are used, so the bar follows your terminal theme.
 If your plan has no rate limits, line 2 shows `Quota: unavailable`.
 
 It refreshes on every session event and every 30 seconds (`refreshInterval`),
-so reset countdowns keep moving while idle. It needs `jq`.
+so reset countdowns keep moving while idle. It needs `jq`; without it, the
+bar only shows a "jq not found" warning.
 
 Test it without Claude Code:
 

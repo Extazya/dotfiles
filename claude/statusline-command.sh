@@ -4,6 +4,11 @@
 # estimated and no state file is needed.
 
 input=$(cat)
+# Without jq every field would silently fall back to its default: say so.
+if ! command -v jq >/dev/null 2>&1; then
+    printf '\033[33mStatus line: jq not found (sudo apt-get install jq)\033[0m\n'
+    exit 0
+fi
 # Blank input (jq -e accepts it and prints nothing) or invalid JSON -> {}
 case "$input" in *[![:space:]]*) ;; *) input='{}' ;; esac
 echo "$input" | jq -e . >/dev/null 2>&1 || input='{}'

@@ -3,13 +3,15 @@
 # Usage: tests/statusline.sh   (from the repo root)
 
 script="$(dirname "$0")/../claude/statusline-command.sh"
+sh=$(command -v sh)
 now=$(date -u +%s)
 fails=0
+test_path=$PATH
 
 # check <name> <json> <expected substring>...
 check() {
     name=$1; json=$2; shift 2
-    out=$(printf '%s' "$json" | sh "$script" 2>&1 | sed 's/\x1b\[[0-9;]*m//g')
+    out=$(printf '%s' "$json" | PATH=$test_path "$sh" "$script" 2>&1 | sed 's/\x1b\[[0-9;]*m//g')
     ok=1
     for want in "$@"; do
         case "$out" in
@@ -33,5 +35,6 @@ check "empty model name" '{"cwd":"/tmp","model":{"display_name":""}}' "| /tmp"
 check "path with spaces" '{"workspace":{"current_dir":"/tmp/a b"},"model":{"display_name":"Sonnet"}}' \
     "| /tmp/a b" "| Sonnet"
 check "over 100%" '{"rate_limits":{"five_hour":{"used_percentage":130,"resets_at":0}}}' "Quota: 100%"
+test_path=/nonexistent check "jq missing" '{}' "jq not found"
 
 [ "$fails" = 0 ] || { echo "$fails check(s) failed"; exit 1; }

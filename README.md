@@ -220,15 +220,19 @@ current file alone with `cc -Wall -Wextra -Werror`.
 A new `Makefile` opened in vim starts from a template with the usual
 `all`, `clean`, `fclean` and `re` rules and the 42 flags.
 
-clangd only analyzes the code for the editor; you still compile with gcc. It
-works out of the box on a single folder of `.c` files. If your headers live
-elsewhere (e.g. `include/`), tell clangd how you build, once per project:
+clangd only analyzes the code for the editor; you still compile with gcc. To
+see the same flags as your Makefile (`-I` for an `include/` folder, `-D`…),
+clangd reads a `compile_commands.json`, and vim generates it for you: when you
+open a C file in a project that has a Makefile but no such file, vim runs
+`bear -- make -Bk` in the background (a full rebuild that keeps going past
+errors, so it records every file), then restarts clangd. It runs again each
+time you save the Makefile, so new files and flag changes are picked up.
 
-```sh
-bear -- make        # records your gcc flags in compile_commands.json
-```
+To do it by hand: `bear -- make re` (a plain `make` with nothing to rebuild
+records nothing).
 
-or create a `compile_flags.txt` at the project root, one flag per line:
+To skip this and set the flags yourself, create a `compile_flags.txt` at the
+project root, one flag per line:
 
 ```
 -std=c99
